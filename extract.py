@@ -15,11 +15,23 @@ max_retry = 5
 attempt = 0
 delay = 10
 
-response = requests.get(url)
-data = response.json()
+#Create data directory
+os.makedirs(data_directory,exist_ok=True)
 
-os.makedirs('data',exist_ok=True)
-
-with open(filename,'w') as file:
-    json.dump(data,file)
-print('done!')
+while attempt < max_retry:
+    response = requests.get(url)
+    status_code = response.status_code
+    if 200 <= status_code < 300:
+        data = response.json()
+        with open(filename,'w') as file:
+            json.dump(data,file)
+        print('Data extracted successfully!')
+        break
+    elif status_code <= 100 or status_code >= 500:
+        attempt+=1
+        print(f'Error - retrying in 10s attempt {attempt}')
+        time.sleep(delay)
+    else:
+        print(f'API Error Code {status_code} - cancelled')
+        break
+        
