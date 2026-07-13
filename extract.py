@@ -1,4 +1,4 @@
-#Libraries
+# Libraries
 import requests
 from datetime import datetime
 import os
@@ -6,7 +6,7 @@ import json
 import logging
 import time
 
-#Variables
+# Variables
 url = 'https://api.tfl.gov.uk/BikePoint/'
 data_directory = 'data'
 logging_directory = 'logs'
@@ -17,10 +17,11 @@ max_retry = 5
 attempt = 0
 delay = 10
 
-#Create directories
+# Create directories
 os.makedirs(data_directory,exist_ok=True)
 os.makedirs(logging_directory,exist_ok=True)
 
+# Setting up the logger
 logging.basicConfig(
     filename = logging_filename,
     format = '%(asctime)s - %(levelname)s - %(message)s',
@@ -30,6 +31,7 @@ logging.basicConfig(
 logger=logging.getLogger()
 logger.info('Logging Initialised')
 
+# Get data from the API - will cycle through attempts unless a 3xx or 4xx error is received
 while attempt < max_retry:
     attempt+=1
     logger.info(f'Attempt {attempt}')
