@@ -1,8 +1,8 @@
 from dotenv import load_dotenv
 import os
 from utils.helpers import logger_setup
-from utils.api_client import extract
-from utils.aws_client import load
+from utils.extract import extract
+from utils.load import load
 
 if __name__ == "__main__":
 
