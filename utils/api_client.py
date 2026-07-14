@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 import requests
 import json
+import os
 
 def extract(data_directory: str):
     """
@@ -24,6 +25,9 @@ def extract(data_directory: str):
 
     # Logger
     logger=logging.getLogger()
+
+    # Ensure the parent data directory exists
+    os.makedirs(data_directory, exist_ok=True)
 
     # Get data from the API - will cycle through attempts unless a 3xx or 4xx error is received
     while attempt < max_retry:
