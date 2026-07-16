@@ -1,4 +1,4 @@
-# **DES7 Bikepoint project**
+# **DES7 Bike Point Pipeline Project**
 
 This is a pipeline we are building alongside coach Jenny to learn the fundamentals of data engineering. Use this ReadMe as a guide of our journey from Extraction to Output.
 
@@ -6,71 +6,72 @@ This is a pipeline we are building alongside coach Jenny to learn the fundamenta
 
 Our data is sourced from the TfL BikePoint API, which can be accessed [here](https://api-portal.tfl.gov.uk/api-details#api=BikePoint&operation=BikePoint_GetAll). We developed a potential use case, where this data would be used to identify hotspots of bike usage overtime. This requires us to extract the API data at regular intervals & attach a timestamp.
 
-To achieve this we wrote a Python script which you can find [here](extract.py). But here is a summary of what we did:
+This is performed by a function contained within the [extract.py](utils/extract.py) file, called by the [main.py](main.py) script.
+
+
+## **Load**
+
+After being saved locally, our data is loaded to Amazon S3 buckets.
+
+This is performed by a function contained within the [load.py](utils/load.py) file, called by the [main.py](main.py) script.
+
+## **Project Structure**
 
 ```
-# Libraries
-import requests
-from datetime import datetime
-import os
-import json
-import logging
-import time
+bikepoint_pipeline/
+├── .env                    # Hidden environment variables (AWS credentials)
+├── main.py                 # The main orchestration script
+└── utils/                  # Core modules package
+    ├── extract.py          # API interaction and local JSON saving
+    ├── load.py             # Boto3 AWS S3 upload logic
+    └── helpers.py          # Logging configuration and timestamp utilities
+```
 
-# Variables
-url = 'https://api.tfl.gov.uk/BikePoint/'
-data_directory = 'data'
-logging_directory = 'logs'
-timestamp = datetime.now().strftime('%Y-%m-%d_%H%M%S')
-filename = f'{data_directory}/{timestamp}.json'
-logging_filename = f'{logging_directory}/{timestamp}.log'
-max_retry = 5
-attempt = 0
-delay = 10
+## **Prerequisites**
 
-# Create directories
-os.makedirs(data_directory,exist_ok=True)
-os.makedirs(logging_directory,exist_ok=True)
+To run this pipeline, you will need the following installed and configured:
 
-# Setting up the logger
-logging.basicConfig(
-    filename = logging_filename,
-    format = '%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+- Python 3.8+
 
-logger=logging.getLogger()
-logger.info('Logging Initialised')
+- An active AWS Account with programmatic access (Access Key and Secret Key)
 
-# Get data from the API - will cycle through attempts unless a 3xx or 4xx error is received
-while attempt < max_retry:
-    attempt+=1
-    logger.info(f'Attempt {attempt}')
-    response = requests.get(url)
-    status_code = response.status_code
-    if 200 <= status_code < 300:
-        data = response.json()
-        if len(data) > 0:
-            try:
-                with open(filename,'w') as file:
-                    json.dump(data,file)
-                print('Data extracted successfully!')
-                logger.info(f'File {filename} successfully saved')
-                break
-            except Exception as e:
-                logger.error(f'An error occurred: {e}')
-        else:
-            print('No data returned!')
-            logger.error('No data returned')
-            break
+- An AWS S3 Bucket created and ready to receive data
 
-    elif status_code <= 100 or status_code >= 500:
-        print(f'Error - retrying in 10s attempt {attempt}')
-        logger.warning(f'Error - retrying in 10s attempt {attempt}')
-        time.sleep(delay)
-    else:
-        print(f'API Error Code {status_code} - cancelled')
-        logger.error(f'Bad response from API. Error code {status_code}')
-        break
+## **Set-up & Installation**
 
+Clone the git repository
+```bash
+git clone https://github.com/JossJL/bikepoint.git
+cd bikepoint
+```
+
+Configure a virtual environment for package installation
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+```
+
+Install required dependencies
+```bash
+pip install requests boto3 python-dotenv
+```
+
+Configure environment variables
+Create a .env in the root directory. Input your AWS credentials here
+
+```bash
+###
+
+AWS_ACCESS_KEY = 'ACCESS_KEY_HERE'
+AWS_SECRET_KEY = 'SECRET_HERE'
+AWS_BUCKET_NAME = 's3-bucket-name'
+AWS_REGION = 'aws-region'
+```
+
+## Usage
+
+Once the environment has been configured, you can trigger the pipeling by running the main script:
+
+```bash
+python main.py
 ```
